@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ziad Sowamrah - Lease Generator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+      min-height: 100vh;
+      color: #1a202c;
+    }
+
+    .app-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 30px 0;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      opacity: 0.85;
+      font-size: 1rem;
+    }
+
+    .wizard-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      display: flex;
+      background: #f7fafc;
+      border-bottom: 1px solid #e2e8f0;
+      overflow-x: auto;
+    }
+
+    .progress-step {
+      flex: 1;
+      padding: 16px 8px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #a0aec0;
+      position: relative;
+      min-width: 90px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .progress-step:hover {
+      background: #edf2f7;
+    }
+
+    .progress-step.active {
+      color: #2b6cb0;
+      background: #ebf8ff;
+    }
+
+    .progress-step.completed {
+      color: #38a169;
+    }
+
+    .progress-step.completed::after {
+      content: '✓';
+      display: block;
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+
+    .step-number {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .wizard-content {
+      padding: 40px;
+    }
+
+    .step-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1a365d;
+      margin-bottom: 8px;
+    }
+
+    .step-description {
+      color: #718096;
+      margin-bottom: 30px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 12px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group small {
+      color: #a0aec0;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: white;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Preview styles */
+    .preview-container {
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .preview-section {
+      margin-bottom: 20px;
+    }
+
+    .preview-section h4 {
+      font-size: 0.875rem;
+      color: #2b6cb0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #bee3f8;
+    }
+
+    .preview-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .preview-item:last-child {
+      border-bottom: none;
+    }
+
+    .preview-label {
+      color: #718096;
+      font-size: 0.875rem;
+    }
+
+    .preview-value {
+      font-weight: 500;
+      color: #1a202c;
+      text-align: right;
+      max-width: 60%;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .action-buttons .btn {
+      flex: 1;
+    }
+
+    /* Modal for generated lease */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.25rem;
+      color: #1a365d;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #a0aec0;
+      padding: 4px 8px;
+    }
+
+    .modal-close:hover {
+      color: #1a202c;
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    /* Lease document preview */
+    .lease-preview {
+      background: white;
+      padding: 40px;
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #000;
+    }
+
+    .lease-preview h1 {
+      text-align: center;
+      font-size: 14pt;
+      margin-bottom: 20px;
+    }
+
+    .lease-preview p {
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+
+    .lease-preview .section-title {
+      font-weight: bold;
+    }
+
+    .lease-preview .underline {
+      text-decoration: underline;
+    }
+
+    .lease-preview .payment-address {
+      margin: 10px 0 10px 40px;
+      font-style: italic;
+      font-weight: bold;
+    }
+
+    .lease-preview .subsection {
+      margin: 10px 0 10px 20px;
+    }
+
+    .lease-preview .subsection-title {
+      text-decoration: underline;
+    }
+
+    .lease-preview .numbered-list {
+      margin: 10px 0 10px 40px;
+    }
+
+    .lease-preview .signature-block {
+      margin-top: 30px;
+    }
+
+    .lease-preview .signature-section {
+      margin: 25px 0;
+    }
+
+    .lease-preview .signature-line {
+      margin: 10px 0;
+    }
+
+    /* Quick fill section */
+    .quick-fill {
+      background: #fffbeb;
+      border: 1px solid #f6e05e;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .quick-fill h4 {
+      color: #744210;
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+    }
+
+    .quick-fill-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .quick-fill-btn {
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #ecc94b;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-fill-btn:hover {
+      background: #fefcbf;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .wizard-content {
+        padding: 24px;
+      }
+      
+      .progress-step {
+        padding: 12px 6px;
+        font-size: 0.65rem;
+      }
+      
+      .step-number {
+        font-size: 1rem;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+      
+      .app-container,
+      .wizard-card,
+      .modal-overlay {
+        display: none !important;
+      }
+      
+      .print-only {
+        display: block !important;
+      }
+    }
+
+    .print-only {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // State management
+    const state = {
+      currentStep: 0,
+      showModal: false,
+      formData: {
+        // Company Info
+        landlord_company: 'Ziad Sowamrah',
+        company_name: 'Ziad Sowamrah',
+        payment_attention: 'Ziad Sowamrah',
+        company_street: '20 Hemlock Rd',
+        company_city_state_zip: 'Windham, ME 04062',
+        
+        // Property Info
+        property_address: '',
+        unit_number: '',
+        max_occupants: '4',
+        legal_residents: '',
+        parking_description: 'One parking spot per unit is provided.',
+        
+        // Tenant Info
+        tenant_names: '',
+        
+        // Lease Terms
+        lease_year: new Date().getFullYear().toString(),
+        lease_date: '',
+        lease_start_date: '',
+        notice_days: '30',
+        monthly_rent: '',
+        late_fee_day: '15th',
+        late_fee_amount: '$50.00',
+        nsf_fee: '$35.00',
+        security_deposit: '',
+        security_deposit_due: '',
+        
+        // Utilities
+        tenant_utilities: 'Electricity',
+        landlord_services: 'Water, sewer, and trash',
+        landlord_utilities: 'water and sewer',
+        
+        // Property Rules
+        abandonment_days: '15',
+        insurance_days: '14',
+        min_temperature: '62',
+        grill_distance: '10',
+        snow_removal_tenant: 'Tenants are responsible for clearing snow from their entryway, walkways, and parking area.',
+        snow_removal_landlord: 'Landlord will handle snow removal for common areas and driveways.',
+        
+        // Signatures
+        landlord_sign_day: '',
+        landlord_sign_month: '',
+        landlord_sign_year: new Date().getFullYear().toString(),
+        tenant_sign_day: '',
+        tenant_sign_month: '',
+        tenant_sign_year: new Date().getFullYear().toString()
+      }
+    };
+
+    const steps = [
+      { id: 'company', title: 'Company', fullTitle: 'Company Information', description: 'Enter your company or landlord details' },
+      { id: 'property', title: 'Property', fullTitle: 'Property Details', description: 'Describe the rental property' },
+      { id: 'tenant', title: 'Tenant', fullTitle: 'Tenant Information', description: 'Enter tenant names and details' },
+      { id: 'terms', title: 'Terms', fullTitle: 'Lease Terms', description: 'Set rent, fees, and dates' },
+      { id: 'utilities', title: 'Utilities', fullTitle: 'Utilities & Services', description: 'Define utility responsibilities' },
+      { id: 'rules', title: 'Rules', fullTitle: 'Property Rules', description: 'Set property-specific rules' },
+      { id: 'review', title: 'Review', fullTitle: 'Review & Generate', description: 'Review all details and create your lease' }
+    ];
+
+    // Helper functions
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function getMonthName(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long' });
+    }
+
+    function getDayOrdinal(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const day = date.getDate();
+      const suffix = ['th', 'st', 'nd', 'rd'];
+      const v = day % 100;
+      return day + (suffix[(v - 20) % 10] || suffix[v] || suffix[0]);
+    }
+
+    function updateFormData(field, value) {
+      state.formData[field] = value;
+      
+      // Auto-populate signature dates from lease date
+      if (field === 'lease_date' && value) {
+        state.formData.landlord_sign_day = getDayOrdinal(value);
+        state.formData.landlord_sign_month = getMonthName(value);
+        state.formData.landlord_sign_year = new Date(value).getFullYear().toString();
+        state.formData.tenant_sign_day = getDayOrdinal(value);
+        state.formData.tenant_sign_month = getMonthName(value);
+        state.formData.tenant_sign_year = new Date(value).getFullYear().toString();
+      }
+      
+      // Auto-populate security deposit due
+      if (field === 'security_deposit' && value) {
+        state.formData.security_deposit_due = value;
+      }
+      
+      render();
+    }
+
+    function goToStep(stepIndex) {
+      if (stepIndex >= 0 && stepIndex < steps.length) {
+        state.currentStep = stepIndex;
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function nextStep() {
+      goToStep(state.currentStep + 1);
+    }
+
+    function prevStep() {
+      goToStep(state.currentStep - 1);
+    }
+
+    function applyDefaults() {
+      state.formData = {
+        ...state.formData,
+        landlord_company: 'Ziad Sowamrah',
+        company_name: 'Ziad Sowamrah',
+        payment_attention: 'Ziad Sowamrah',
+        company_street: '20 Hemlock Rd',
+        company_city_state_zip: 'Windham, ME 04062',
+        notice_days: '30',
+        late_fee_day: '15th',
+        late_fee_amount: '$50.00',
+        nsf_fee: '$35.00',
+        abandonment_days: '15',
+        insurance_days: '14',
+        min_temperature: '62',
+        grill_distance: '10',
+        max_occupants: '4',
+        parking_description: 'One parking spot per unit is provided.',
+        snow_removal_tenant: 'Tenants are responsible for clearing snow from their entryway, walkways, and parking area.',
+        snow_removal_landlord: 'Landlord will handle snow removal for common areas and driveways.',
+        tenant_utilities: 'Electricity',
+        landlord_services: 'Water, sewer, and trash',
+        landlord_utilities: 'water and sewer'
+      };
+      render();
+    }
+
+    // Render functions
+    function renderStepContent() {
+      const step = steps[state.currentStep];
+      
+      switch(step.id) {
+        case 'company':
+          return `
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Landlord/Company Legal Name</label>
+                <input type="text" value="${state.formData.landlord_company}" 
+                       onchange="updateFormData('landlord_company', this.value)"
+                       placeholder="e.g., Ziad Sowamrah">
+                <small>This appears in the lease agreement header</small>
+              </div>
+              <div class="form-group">
+                <label>Company Display Name</label>
+                <input type="text" value="${state.formData.company_name}" 
+                       onchange="updateFormData('company_name', this.value)"
+                       placeholder="e.g., Ziad Sowamrah">
+              </div>
+              <div class="form-group">
+                <label>Payment Attention Line</label>
+                <input type="text" value="${state.formData.payment_attention}" 
+                       onchange="updateFormData('payment_attention', this.value)"
+                       placeholder="e.g., Property Management">
+              </div>
+              <div class="form-group full-width">
+                <label>Street Address</label>
+                <input type="text" value="${state.formData.company_street}" 
+                       onchange="updateFormData('company_street', this.value)"
+                       placeholder="e.g., 123 Main Street">
+              </div>
+              <div class="form-group full-width">
+                <label>City, State, ZIP</label>
+                <input type="text" value="${state.formData.company_city_state_zip}" 
+                       onchange="updateFormData('company_city_state_zip', this.value)"
+                       placeholder="e.g., Portland, ME 04101">
+              </div>
+            </div>
+          `;
+          
+        case 'property':
+          return `
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Property Address</label>
+                <select onchange="updateFormData('property_address', this.value)">
+                  <option value="">-- Select a Property --</option>
+                  <option value="126 Pierce St, Lewiston, ME 04240" ${state.formData.property_address === '126 Pierce St, Lewiston, ME 04240' ? 'selected' : ''}>126 Pierce St, Lewiston, ME 04240</option>
+                  <option value="128 Pierce St, Lewiston, ME 04240" ${state.formData.property_address === '128 Pierce St, Lewiston, ME 04240' ? 'selected' : ''}>128 Pierce St, Lewiston, ME 04240</option>
+                  <option value="50 Knox St, Lewiston, ME 04240" ${state.formData.property_address === '50 Knox St, Lewiston, ME 04240' ? 'selected' : ''}>50 Knox St, Lewiston, ME 04240</option>
+                  <option value="66 Knox St, Lewiston, ME 04240" ${state.formData.property_address === '66 Knox St, Lewiston, ME 04240' ? 'selected' : ''}>66 Knox St, Lewiston, ME 04240</option>
+                  <option value="68 Knox St, Lewiston, ME 04240" ${state.formData.property_address === '68 Knox St, Lewiston, ME 04240' ? 'selected' : ''}>68 Knox St, Lewiston, ME 04240</option>
+                  <option value="213 Pine St, Lewiston, ME 04240" ${state.formData.property_address === '213 Pine St, Lewiston, ME 04240' ? 'selected' : ''}>213 Pine St, Lewiston, ME 04240</option>
+                  <option value="56 Jefferson St, Lewiston, ME 04240" ${state.formData.property_address === '56 Jefferson St, Lewiston, ME 04240' ? 'selected' : ''}>56 Jefferson St, Lewiston, ME 04240</option>
+                  <option value="514 Poland Rd, Auburn, ME 04210" ${state.formData.property_address === '514 Poland Rd, Auburn, ME 04210' ? 'selected' : ''}>514 Poland Rd, Auburn, ME 04210</option>
+                  <option value="92 Cottage St, Westbrook, ME 04092" ${state.formData.property_address === '92 Cottage St, Westbrook, ME 04092' ? 'selected' : ''}>92 Cottage St, Westbrook, ME 04092</option>
+                  <option value="45 West Bates St, Lewiston, ME 04240" ${state.formData.property_address === '45 West Bates St, Lewiston, ME 04240' ? 'selected' : ''}>45 West Bates St, Lewiston, ME 04240</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Unit Number (if applicable)</label>
+                <input type="text" value="${state.formData.unit_number || ''}" 
+                       onchange="updateFormData('unit_number', this.value)"
+                       placeholder="e.g., Unit 2, Apt 3B">
+              </div>
+              <div class="form-group">
+                <label>Maximum Occupants</label>
+                <input type="number" value="${state.formData.max_occupants}" 
+                       onchange="updateFormData('max_occupants', this.value)"
+                       placeholder="e.g., 4">
+              </div>
+              <div class="form-group">
+                <label>Legal Residents</label>
+                <input type="text" value="${state.formData.legal_residents}" 
+                       onchange="updateFormData('legal_residents', this.value)"
+                       placeholder="e.g., John Doe, Jane Doe">
+                <small>Names of all approved residents</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Parking Description</label>
+                <textarea onchange="updateFormData('parking_description', this.value)"
+                          placeholder="Describe parking arrangements...">${state.formData.parking_description}</textarea>
+              </div>
+            </div>
+          `;
+          
+        case 'tenant':
+          return `
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Tenant Name(s)</label>
+                <input type="text" value="${state.formData.tenant_names}" 
+                       onchange="updateFormData('tenant_names', this.value)"
+                       placeholder="e.g., John Doe and Jane Doe">
+                <small>Enter all tenant names as they should appear on the lease</small>
+              </div>
+            </div>
+          `;
+          
+        case 'terms':
+          return `
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Lease Year</label>
+                <input type="text" value="${state.formData.lease_year}" 
+                       onchange="updateFormData('lease_year', this.value)"
+                       placeholder="e.g., 2025">
+              </div>
+              <div class="form-group">
+                <label>Lease Signing Date</label>
+                <input type="date" value="${state.formData.lease_date}" 
+                       onchange="updateFormData('lease_date', this.value)">
+              </div>
+              <div class="form-group">
+                <label>Lease Start Date</label>
+                <input type="date" value="${state.formData.lease_start_date}" 
+                       onchange="updateFormData('lease_start_date', this.value)">
+              </div>
+              <div class="form-group">
+                <label>Notice Days to Terminate</label>
+                <input type="text" value="30" disabled style="background: #f7fafc; color: #718096;">
+                <small>Required by Maine law for at-will tenancies</small>
+              </div>
+              <div class="form-group">
+                <label>Monthly Rent</label>
+                <input type="text" value="${state.formData.monthly_rent}" 
+                       onchange="updateFormData('monthly_rent', this.value)"
+                       placeholder="e.g., $1,500.00">
+              </div>
+              <div class="form-group">
+                <label>Late Fee Kicks In</label>
+                <input type="text" value="15th" disabled style="background: #f7fafc; color: #718096;">
+                <small>Maine law: cannot charge late fee before 15th</small>
+              </div>
+              <div class="form-group">
+                <label>Late Fee Amount</label>
+                <input type="text" value="${state.formData.late_fee_amount}" 
+                       onchange="updateFormData('late_fee_amount', this.value)"
+                       placeholder="e.g., $50.00">
+                <small>Maine law: max 4% of monthly rent</small>
+              </div>
+              <div class="form-group">
+                <label>NSF Fee (Non-Sufficient Funds)</label>
+                <input type="text" value="${state.formData.nsf_fee}" 
+                       onchange="updateFormData('nsf_fee', this.value)"
+                       placeholder="e.g., $35.00">
+              </div>
+              <div class="form-group">
+                <label>Security Deposit</label>
+                <input type="text" value="${state.formData.security_deposit}" 
+                       onchange="updateFormData('security_deposit', this.value)"
+                       placeholder="e.g., $1,500.00">
+              </div>
+              <div class="form-group">
+                <label>Security Deposit Due at Signing</label>
+                <input type="text" value="${state.formData.security_deposit_due}" 
+                       onchange="updateFormData('security_deposit_due', this.value)"
+                       placeholder="e.g., $1,500.00">
+              </div>
+            </div>
+          `;
+          
+        case 'utilities':
+          return `
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Tenant-Paid Utilities</label>
+                <input type="text" value="${state.formData.tenant_utilities}" 
+                       onchange="updateFormData('tenant_utilities', this.value)"
+                       placeholder="e.g., Electricity, gas, internet">
+              </div>
+              <div class="form-group full-width">
+                <label>Landlord-Covered Services</label>
+                <input type="text" value="${state.formData.landlord_services}" 
+                       onchange="updateFormData('landlord_services', this.value)"
+                       placeholder="e.g., Water, sewer, and trash">
+              </div>
+              <div class="form-group full-width">
+                <label>Landlord-Paid Utilities</label>
+                <input type="text" value="${state.formData.landlord_utilities}" 
+                       onchange="updateFormData('landlord_utilities', this.value)"
+                       placeholder="e.g., water and sewer">
+              </div>
+            </div>
+          `;
+          
+        case 'rules':
+          return `
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Abandonment Days</label>
+                <input type="number" value="${state.formData.abandonment_days}" 
+                       onchange="updateFormData('abandonment_days', this.value)"
+                       placeholder="e.g., 15">
+                <small>Days absent before considered abandoned</small>
+              </div>
+              <div class="form-group">
+                <label>Insurance Proof Due (Days)</label>
+                <input type="number" value="${state.formData.insurance_days}" 
+                       onchange="updateFormData('insurance_days', this.value)"
+                       placeholder="e.g., 14">
+              </div>
+              <div class="form-group">
+                <label>Minimum Temperature (°F)</label>
+                <input type="number" value="${state.formData.min_temperature}" 
+                       onchange="updateFormData('min_temperature', this.value)"
+                       placeholder="e.g., 62">
+                <small>Maine law: minimum 62°F required</small>
+              </div>
+              <div class="form-group">
+                <label>Grill Distance from Building (ft)</label>
+                <input type="number" value="${state.formData.grill_distance}" 
+                       onchange="updateFormData('grill_distance', this.value)"
+                       placeholder="e.g., 10">
+              </div>
+              <div class="form-group full-width">
+                <label>Tenant Snow Removal Responsibilities</label>
+                <textarea onchange="updateFormData('snow_removal_tenant', this.value)"
+                          placeholder="Describe tenant's snow removal duties...">${state.formData.snow_removal_tenant}</textarea>
+              </div>
+              <div class="form-group full-width">
+                <label>Landlord Snow Removal Responsibilities</label>
+                <textarea onchange="updateFormData('snow_removal_landlord', this.value)"
+                          placeholder="Describe landlord's snow removal duties...">${state.formData.snow_removal_landlord}</textarea>
+              </div>
+            </div>
+          `;
+          
+        case 'review':
+          return `
+            <div class="preview-container">
+              <div class="preview-section">
+                <h4>Company Information</h4>
+                <div class="preview-item">
+                  <span class="preview-label">Landlord/Company</span>
+                  <span class="preview-value">${state.formData.landlord_company || '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Company Name</span>
+                  <span class="preview-value">${state.formData.company_name || '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Address</span>
+                  <span class="preview-value">${state.formData.company_street || '—'}, ${state.formData.company_city_state_zip || '—'}</span>
+                </div>
+              </div>
+              
+              <div class="preview-section">
+                <h4>Property Details</h4>
+                <div class="preview-item">
+                  <span class="preview-label">Property Address</span>
+                  <span class="preview-value">${state.formData.property_address ? (state.formData.unit_number ? state.formData.property_address + ', ' + state.formData.unit_number : state.formData.property_address) : '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Max Occupants</span>
+                  <span class="preview-value">${state.formData.max_occupants || '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Legal Residents</span>
+                  <span class="preview-value">${state.formData.legal_residents || '—'}</span>
+                </div>
+              </div>
+              
+              <div class="preview-section">
+                <h4>Tenant Information</h4>
+                <div class="preview-item">
+                  <span class="preview-label">Tenant Names</span>
+                  <span class="preview-value">${state.formData.tenant_names || '—'}</span>
+                </div>
+              </div>
+              
+              <div class="preview-section">
+                <h4>Lease Terms</h4>
+                <div class="preview-item">
+                  <span class="preview-label">Lease Date</span>
+                  <span class="preview-value">${state.formData.lease_date ? formatDate(state.formData.lease_date) : '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Start Date</span>
+                  <span class="preview-value">${state.formData.lease_start_date ? formatDate(state.formData.lease_start_date) : '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Monthly Rent</span>
+                  <span class="preview-value">${state.formData.monthly_rent || '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Security Deposit</span>
+                  <span class="preview-value">${state.formData.security_deposit || '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Late Fee</span>
+                  <span class="preview-value">${state.formData.late_fee_amount} after ${state.formData.late_fee_day}</span>
+                </div>
+              </div>
+              
+              <div class="preview-section">
+                <h4>Utilities</h4>
+                <div class="preview-item">
+                  <span class="preview-label">Tenant Pays</span>
+                  <span class="preview-value">${state.formData.tenant_utilities || '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Landlord Covers</span>
+                  <span class="preview-value">${state.formData.landlord_services || '—'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="action-buttons">
+              <button class="btn btn-success" onclick="generateLease()">
+                📄 Generate Lease Document
+              </button>
+            </div>
+          `;
+          
+        default:
+          return '<p>Unknown step</p>';
+      }
+    }
+
+    function generateLease() {
+      state.showModal = true;
+      render();
+    }
+
+    function closeModal() {
+      state.showModal = false;
+      render();
+    }
+
+    function printLease() {
+      const leaseContent = document.getElementById('lease-document').innerHTML;
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>At-Will Lease Agreement</title>
+          <style>
+            @page {
+              margin: 0.75in 1in 1in 1in;
+              @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #666;
+              }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              font-size: 11pt;
+              line-height: 1.5;
+              color: #000;
+              margin: 0;
+              padding: 0;
+            }
+            h1 {
+              text-align: center;
+              font-size: 14pt;
+              margin-bottom: 20px;
+            }
+            p {
+              margin-bottom: 12px;
+              text-align: justify;
+            }
+            .section-title {
+              font-weight: bold;
+            }
+            .underline {
+              text-decoration: underline;
+            }
+            .payment-address {
+              margin: 10px 0 10px 40px;
+              font-style: italic;
+              font-weight: bold;
+            }
+            .subsection {
+              margin: 10px 0 10px 20px;
+            }
+            .subsection-title {
+              text-decoration: underline;
+            }
+            .numbered-list {
+              margin: 10px 0 10px 40px;
+            }
+            .signature-block {
+              margin-top: 30px;
+            }
+            .signature-section {
+              margin: 25px 0;
+            }
+            .signature-line {
+              margin: 10px 0;
+            }
+          </style>
+        </head>
+        <body>
+          ${leaseContent}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    function downloadLease() {
+      const leaseContent = document.getElementById('lease-document').innerHTML;
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>At-Will Lease Agreement - ${state.formData.tenant_names}</title>
+          <style>
+            @media print {
+              body { margin: 0; background: #fff; }
+              .page { box-shadow: none; padding: 0.75in 1in; }
+            }
+            * { box-sizing: border-box; }
+            body {
+              font-family: Arial, sans-serif;
+              font-size: 11pt;
+              line-height: 1.5;
+              color: #000;
+              background: #f0f0f0;
+              margin: 0;
+              padding: 20px;
+            }
+            .page {
+              max-width: 8.5in;
+              margin: 0 auto 20px auto;
+              padding: 0.75in 1in;
+              background: #fff;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            h1 {
+              text-align: center;
+              font-size: 14pt;
+              font-weight: bold;
+              margin: 0 0 20px 0;
+            }
+            p {
+              margin: 0 0 12px 0;
+              text-align: justify;
+            }
+            .section-title { font-weight: bold; margin-top: 15px; }
+            .underline { text-decoration: underline; }
+            .payment-address {
+              margin: 10px 0 10px 40px;
+              font-style: italic;
+              font-weight: bold;
+            }
+            .subsection { margin: 10px 0 10px 20px; }
+            .subsection-title { text-decoration: underline; }
+            .numbered-list { margin: 10px 0 10px 40px; }
+            .signature-block { margin-top: 30px; }
+            .signature-section { margin: 25px 0; }
+            .signature-line { margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="page">
+            ${leaseContent}
+          </div>
+        </body>
+        </html>
+      `;
+      
+      const blob = new Blob([fullHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Lease_${state.formData.tenant_names.replace(/[^a-zA-Z0-9]/g, '_')}_${state.formData.lease_date || 'draft'}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderLeaseDocument() {
+      const d = state.formData;
+      const leaseDate = d.lease_date ? formatDate(d.lease_date) : '________________';
+      const startDate = d.lease_start_date ? formatDate(d.lease_start_date) : '________________';
+      
+      return `
+        <h1>${d.lease_year} At-Will Lease Agreement</h1>
+        
+        <p>This Lease Agreement ("Lease") is entered by and between ${d.landlord_company || '________________'} ("Landlord") and <span class="underline">${d.tenant_names || '________________'}</span> ("Tenants") on <span class="underline">${leaseDate}</span>. Landlord and Tenants may collectively be referred to as the "Parties." This Lease creates joint and several liabilities in the case of multiple Tenants. The Parties agree as follows:</p>
+        
+        <p><span class="section-title">PREMISES:</span> Landlord hereby leases the premises located at <span class="underline">${d.property_address ? (d.unit_number ? d.property_address + ', ' + d.unit_number : d.property_address) : '________________'}</span>, State of Maine (the "Premises") to Tenants.</p>
+        
+        <p><span class="section-title">LEASE TERM:</span> The Lease will start on ${startDate} and will continue on a month-to-month basis until such time that it is terminated. The lease may be terminated by the Landlord or Tenants with a ${d.notice_days} day written notice by either Party. Notice given by the Tenants must be confirmed and received by the Landlord.</p>
+        
+        <p><span class="section-title">LEASE PAYMENTS:</span> Tenant agrees to pay to Landlord as rent for the Premises the amount of ${d.monthly_rent || '________________'} each month in advance or on the 1st day of each month at:</p>
+        
+        <div class="payment-address">
+          ${d.company_name || '________________'}<br>
+          Attn: ${d.payment_attention || '________________'}<br>
+          ${d.company_street || '________________'}<br>
+          ${d.company_city_state_zip || '________________'}
+        </div>
+        
+        <p>(Payment in the form of mailed checks that are not postmarked by the 1st will be considered as late.)</p>
+        
+        <p><span class="section-title">LATE CHARGES:</span> Rent is due on the 1st of each month. If any portion or all of rent is not received on or by the ${d.late_fee_day} of the month, a fee of ${d.late_fee_amount} will be assessed.</p>
+        
+        <p><span class="section-title">INSUFFICIENT FUNDS:</span> Tenants agree to pay the charge of ${d.nsf_fee} for each check given by any Tenant to Landlord that is returned to Landlord for lack of sufficient funds.</p>
+        
+        <p><span class="section-title">SECURITY DEPOSIT:</span> Tenants shall provide a deposit to Landlord, in trust, of ${d.security_deposit || '________________'}, as security for the performance by Tenants of the terms under this Lease and towards any damages caused by Tenants, Tenants' family, agents and visitors to the Premises during the term of this Lease. Tenant will be providing ${d.security_deposit_due || '________________'} at lease signing.</p>
+        
+        <p><span class="section-title">RETURN OF SECURITY DEPOSIT:</span> This Security Deposit may be used by the Landlord after the tenancy has ended to repair damage to the residence and for the actual costs of unpaid rent, storing and disposing of unclaimed property, or utility charges the Tenants owe to the Landlord. The Security Deposit cannot be used to pay for routine cleaning or painting made necessary by normal wear and tear. The Landlord will return the entire Security Deposit to the Tenant at the end of the lease if the following conditions are met:</p>
+        
+        <div class="numbered-list">
+          <p>1. The apartment is in good condition except for (a) normal wear and tear or (b) damage not caused by any Tenant, the Tenants' family, invitees or guests;</p>
+          <p>2. The Tenants do not owe any rent or utility charges which the Tenant was required to pay directly to the Landlord; and</p>
+          <p>3. The Tenants have not caused the Landlord expenses for storage and disposing of unclaimed property.</p>
+        </div>
+        
+        <p>If the Landlord deducts money from the Tenant's Security Deposit, the Landlord will provide the Tenant a list of the items for which the Tenant is being charged and return to the Tenant the balance of the Security Deposit. The Landlord will return the Security Deposit, or the remaining balance, to the Tenant no more than thirty (30) days after the tenancy ends.</p>
+        
+        <p><span class="section-title">DEFAULTS:</span> If Tenant fails to perform or fulfill any obligation under this Lease, Tenant shall be in default of this Lease. The failure of Tenants or their guests or invitees to comply with any term of this Agreement is ground for termination of the tenancy, with appropriate notice to Tenants and procedures as required by law.</p>
+        
+        <p><span class="section-title">TENANT RESIDENTIAL RESPONSIBILITIES:</span></p>
+        
+        <div class="subsection">
+          <p>A. <span class="subsection-title">Use Only as a Residence</span>. The Tenant agrees that the residence will be used only as a residence, except for incidental use in trade or business (such as telephone solicitation of sales or arts and crafts created for profit). Such incidental uses will be allowed if they do not violate local zoning laws or affect the Landlord's ability to obtain fire or liability insurance. The total number of persons residing in this residence cannot exceed ${d.max_occupants}. Legal residence of this unit is ${d.legal_residents || '________________'}.</p>
+          
+          <p>B. <span class="subsection-title">Damage</span>. The Tenants agree not to damage the apartment, the building, the grounds, or the common areas or to interfere with the rights of other Tenants to live in their units in peace and quiet. Damage (other than normal wear and tear) caused by the Tenants, the Tenants' family, invitees, or guests shall be repaired by the Tenant at the Tenant's expense. Tenants agree to maintain premises in the same condition as when the Tenants took possession. Upon failure of the Tenant to maintain the premises, as stated above, or the Tenant's failure to make such repairs as needed, the Landlord, after reasonable written notice to the Tenants, may make the repairs and the Tenants shall be responsible to the Landlord for the repair costs incurred.</p>
+          
+          <p>C. <span class="subsection-title">Alterations</span>. No alteration, addition or improvement to the residence shall be made by the Tenant without the prior written consent by the Landlord.</p>
+          
+          <p>D. <span class="subsection-title">Smoking</span>. No smoking of any tobacco, marijuana, or any other substance, for medical purposes or otherwise, or any illegal drug is permitted in the building.</p>
+          
+          <p>E. <span class="subsection-title">Gardening</span>. Tenants agree to only keep common houseplants in the unit and agree there will be no gardening and/or growing of medicinal plants, of any type, within the building.</p>
+          
+          <p>F. <span class="subsection-title">Temperature</span>. Tenants agree that the premises will not get below ${d.min_temperature} degrees Fahrenheit at any time of year. If the temperature drops below ${d.min_temperature} degrees Fahrenheit and damage to the unit occurs, the Tenants are responsible for the full repair cost.</p>
+        </div>
+        
+        <p><span class="section-title">QUIET ENJOYMENT:</span> Tenants shall be entitled to quiet enjoyment of the Premises and the Landlord will not interfere with that right if the Tenants pay the rent in a timely manner and perform all other obligations under this Lease.</p>
+        
+        <p><span class="section-title">POSSESSION AND SURRENDER OF PREMISES:</span> At the expiration of the Lease, Tenants shall peaceably surrender the Premises to the Landlord or Landlord's agent in the same condition it was at the commencement of the Lease.</p>
+        
+        <p><span class="section-title">LANDLORD RESIDENTIAL RESPONSIBILITIES:</span></p>
+        
+        <div class="subsection">
+          <p>A. <span class="subsection-title">Legal Use of The Residence</span>. The Landlord agrees not to interfere with the Tenants' legal use of the residence.</p>
+          
+          <p>B. <span class="subsection-title">Residence Must Be Fit to Live In</span>. The Landlord promises that the residence: (1) complies with applicable housing codes; (2) is fit to live in; and (3) is not dangerous to the life, health or safety of the occupants. The Landlord agrees to make all necessary repairs and take all necessary action to keep the residence fit to live in and to meet all applicable housing code requirements. The Landlord is not responsible for this promise if the residence becomes unfit to live in due to any Tenant's misconduct or the misconduct of the Tenants' family, invitees, or guests. Prior to the Tenants entering this lease, the Landlord agrees to provide the Tenant with both the federal lead based paint hazard notice and brochure, unless the housing is specifically exempt from this requirement.</p>
+        </div>
+        
+        <p><span class="section-title">CONDITION OF PREMISES:</span> Tenants or Tenant's agent has inspected the Premises, the fixtures, the grounds, building and improvements and acknowledges that the Premises are in good and acceptable condition and are habitable.</p>
+        
+        <p><span class="section-title">ASSIGNMENT AND SUBLEASE:</span> Tenants shall not assign or sublease any interest in this Lease without prior written consent of the Landlord.</p>
+        
+        <p><span class="section-title">DANGEROUS MATERIALS:</span> Tenants shall not keep or have on/or around the Premises any item of a dangerous, flammable, or explosive nature that might unreasonably increase the risk of fire or explosion on or around the Premises or that might be considered hazardous by any responsible insurance company.</p>
+        
+        <p><span class="section-title">UTILITIES AND SERVICES:</span> ${d.tenant_utilities} are the Tenant's responsibility. ${d.landlord_services} will be covered by Landlord. Landlord also is responsible for ${d.landlord_utilities} for the property.</p>
+        
+        <p><span class="section-title">PETS:</span> Tenant shall not keep any additional pets on the Premises without the prior written consent of the Landlord and a pet deposit per animal, if pet is approved, will be required. If any pet is approved, property visits will be done by Landlord, with notice, to evaluate property for any damages the pet is causing to the property. If any damage is found by Landlord, approval for pet may be rescinded and the Tenant will be responsible for any damages. Upon failure of the Tenant to make such repairs as needed, the Landlord, after reasonable written notice to the Tenants, may make the repairs and the Tenants shall be responsible to the Landlord for the repair costs incurred. At the lease end, the Tenants will be responsible for paying for a professional deep clean of the unit. If one is not completed to the Landlord's satisfaction, a portion of the pet deposit may be retained to cover a professional deep cleaning.</p>
+        
+        <p><span class="section-title">ALTERATIONS AND IMPROVEMENTS:</span> Tenant agrees not to make any improvements or alterations to the Premises without prior written consent of the Landlord. If any alterations, improvements, or changes are made to or built on or around the Premises, with the exception of fixtures and personal property that can be removed without damage to the Premises, they shall become the property of Landlord and shall remain at the expiration of the Lease, unless otherwise agreed in writing.</p>
+        
+        <p><span class="section-title">DAMAGE TO PREMISES:</span> If the Premises or part of the Premises are damaged or destroyed by fire or other casualty not due to Tenants' negligence, the rent will be abated during the time that the Premises are uninhabitable. If Landlord decides not to repair or rebuild the Premises, then this Lease shall terminate, and the rent shall be prorated up to the time of the damage, with remainder of the prorated month refunded to Tenants. Any rent paid in advance shall be refunded to Tenants.</p>
+        
+        <p><span class="section-title">MAINTENANCE AND REPAIR:</span> Tenants will, at Tenants' sole expense, keep and maintain the Premises in good, clean, and sanitary condition and repair during the term of this Lease and any renewal thereof. Tenant shall be responsible to make all repairs to the Premises, fixtures, appliances, and equipment therein that may have been damaged by Tenants' misuse, waste, or neglect, or that of the Tenants' family, agents, or visitors. Tenants agree that no painting will be done on or about the Premises without the prior written consent of Landlord. Tenants shall promptly notify the Landlord of any damage, defect, or destruction of the Premises or in the event of the failure of any of the appliances or equipment. Landlord will use its best efforts to repair or replace any such damaged or defective areas, appliances, or equipment.</p>
+        
+        <p><span class="section-title">RIGHT OF INSPECTION:</span> Tenants agree to make the Premises available to Landlord or Landlord's agents for the purposes of inspection, making repairs or improvements, or to supply agreed services or show the premises to prospective buyers or Tenants, or in case of emergency. Except in case of emergency, Landlord shall give Tenant reasonable notice of intent to enter. For these purposes, twenty four (24) hour notice shall be deemed reasonable. Tenants shall not, without Landlord's prior written consent, add, alter, or rekey any locks to the Premises. At all times Landlord shall be provided with a key or keys capable of unlocking all such locks and gaining entry. Tenants further agree to notify Landlord in writing if Tenants install any burglar alarm system, including instructions on how to disarm it in case of emergency entry.</p>
+        
+        <p><span class="section-title">ABANDONMENT:</span> If Tenants abandon the Premises of any personal property during the term of this Lease, Landlord may, at Landlord's option, enter the Premises by any legal means without liability to Tenants and may, at Landlord's option, terminate the Lease. Abandonment is defined as absence of the Tenants from the Premises for at least ${d.abandonment_days} consecutive days without notice to the Landlord. If Tenants abandon the Premises while the rent is outstanding for more than ${d.abandonment_days} days and there is not reasonable evidence, other than the presence of the Tenants' personal property, that the Tenant is occupying the unit, Landlord may at Landlord's option terminate this Lease Agreement and regain possession in the manner prescribed by law. Landlord will dispose of all abandoned personal property on the Premises in any manner allowed by law.</p>
+        
+        <p><span class="section-title">EXTENDED ABSENCES:</span> In the event Tenants will be away from the Premises for more than ${d.abandonment_days} consecutive days, Tenant agrees to notify Landlord in writing of such absence. During such absence, Landlord may enter the premises at times reasonably necessary to maintain the property and inspect for damages and needed repairs.</p>
+        
+        <p><span class="section-title">SECURITY:</span> Tenants understand that Landlord does not provide any security alarm system or other security for Tenants or the Premises. In the event any alarm system is provided, Tenant understands that such alarm system is not warranted to be complete in all respects or to be sufficient to protect Tenants on the Premises. Tenants release Landlord from any loss, damage, claim, or injury resulting from the failure of any alarm system, security or from the lack of any alarm system or security.</p>
+        
+        <p><span class="section-title">SEVERABILITY:</span> If any part of this Lease shall be held unenforceable for any reason, the remainder of this Agreement shall continue in full force and effect. If any court of competent jurisdiction deems any provision of this Lease invalid or unenforceable, and if limiting such provision would make the provision valid, then such provision shall be deemed to be construed as so limited.</p>
+        
+        <p><span class="section-title">INSURANCE:</span> Landlord and Tenants shall each be responsible to maintain appropriate insurance for their respective interests in the Premises and property located on the Premises. Tenants understand that Landlord will not provide any insurance coverage for Tenants' property. Landlord will not be responsible for any loss of Tenants' property, whether by theft, fire, riots, strikes, acts of God or otherwise. Tenants are to provide ${d.company_name || '________________'} with a copy of their renters Insurance Policy/Policies within ${d.insurance_days} days of move in.</p>
+        
+        <p><span class="section-title">BINDING EFFECT:</span> The covenants and conditions contained in the Lease shall apply to the Parties and the heirs, legal representatives, successors and permitted assigns of the Parties.</p>
+        
+        <p><span class="section-title">GOVERNING LAW:</span> This Lease shall be governed by and construed in accordance with the laws of the State of Maine.</p>
+        
+        <p><span class="section-title">ENTIRE AGREEMENT:</span> This Lease constitutes the entire Agreement between the Parties and supersedes any prior understanding or representation of any kind preceding the date of this Agreement. There are no other promises, conditions, understandings or other Agreements, whether oral or written, relating to the subject matter of this Lease. This Lease may be modified in writing and must be signed by both Landlord and Tenant.</p>
+        
+        <p><span class="section-title">NOTICE:</span> Any notice required or otherwise given pursuant to this Lease shall be in writing and may be mailed certified return receipt requested, postage prepaid, or delivered by overnight delivery service, if to Tenant, at the Premise and if to Landlord, at the address for payment of rent. Either party may change such addresses from time to time by providing notice as set forth above. Landlord may also give notice to Tenant through electronic means, i.e. Email/Text Message, or by physically posting a notice on the Unit entry door.</p>
+        
+        <p><span class="section-title">SALE OF PROPERTY:</span> In the event of any sale of the property, Landlord shall be and hereby is entirely freed and relieved of all liability under any and all of its covenants and obligations contained in or derived from this Lease provided the purchaser, at such sale or any subsequent sale of the Premises assumes in writing any and all of the covenants and obligations of Landlord under this Lease. If any security deposit or prepaid Rent has been paid by Tenant, Landlord will transfer the security deposit and prepaid rent to Landlord's successor and upon such transfer, Landlord shall be relieved of any and all further liability with respect thereto. If the Landlord sells the Premises the Tenant can be given thirty (30) days' notice at any time to vacate by written notice.</p>
+        
+        <p><span class="section-title">ADDITIONAL TERMS AND CONDITIONS: DISPLAY OF SIGNS:</span> Landlord or Landlord's agent may display "For Sale" or "For Rent" or "Vacancy" or similar signs on or about the Premises and enter to show the Premises to prospective Tenants during the last thirty (30) days of this Lease. Landlord will provide notice of the intent to enter with the intent to show the Premises. Tenants agree that no signs shall be placed by Tenants on the Premises without the prior written consent of the Landlord.</p>
+        
+        <p><span class="section-title">NOISE:</span> Tenant shall not cause or allow any unreasonably loud noise or activity in the Premises, including the outdoor common space, that might disturb the rights, comforts, and conveniences of other persons. Furniture delivery and removal will take place between 8:00a.m and 8:00p.m.</p>
+        
+        <p><span class="section-title">PARKING:</span> ${d.parking_description} Landlord is not responsible for, nor does it assume liability for any damages caused by fire, theft, and casualty or any other cause whatsoever with respect to any vehicle or its contents. No vehicles shall be parked in the driveway for repair or maintenance purposes. Any vehicle at the property must be in running and moveable condition at all times. Any vehicle at the property must also have current registration and inspection per the State of Maine requirement.</p>
+        
+        <p><span class="section-title">SNOW REMOVAL:</span> ${d.snow_removal_tenant} ${d.snow_removal_landlord}</p>
+        
+        <p><span class="section-title">COMMON YARD:</span> The yard around the building is a common area to be shared with the other Units. Tenants are expected to clean up after themselves and work to keep this area, along with the areas around their Unit, clean and orderly and free from debris. Disposal of any unmanaged debris will be charged to the Tenants.</p>
+        
+        <p><span class="section-title">TRASH:</span> Trash collection at the Unit is the responsibility of the Landlord. Only household trash in 35 gallon or smaller trash bags is permitted, and large items or excess trash must be disposed of by Tenants. Trash is collected weekly. Trash is not permitted to accumulate on the property in any way and must be promptly addressed.</p>
+        
+        <p><span class="section-title">BICYCLES:</span> All bicycles owned by the Tenants shall be stored only in the areas where they will not damage the Premises. Landlord is not responsible for damage or theft of any bicycle on the property.</p>
+        
+        <p><span class="section-title">GRILLS:</span> Grills are permitted to be used in the back lawn area, but must maintain a distance of ${d.grill_distance} feet from the building while in use. Any damage to any surroundings or the building is the responsibility of the Tenant and the Landlord is not liable for damages to property or the grill itself.</p>
+        
+        <p><span class="section-title">LOCKING OF ENTRANCE DOORS:</span> For safety purposes, the entrance door should remain locked. Tenants shall not prop open any entrance doors.</p>
+        
+        <p><span class="section-title">DWELLING:</span> Tenants are only entitled to occupy the dwelling listed above. This Lease does not entitle the Tenants to use any area outside of the dwelling without written permission from the Landlord. Landlord is not responsible for, nor does it assume liability for, any damages caused by fire, theft, temperature, and casualty or any other cause whatsoever with respect to anything stored at the property.</p>
+        
+        <p><span class="section-title">WATER LEAKS:</span> Tenants are to notify the Landlord immediately if Tenants notice any running water in the faucets in the kitchen, bathroom sinks, bathtub, or any other faucets. If the toilet is running and does not shut off properly, Tenants are to notify Landlord immediately. If Tenants do not notify Landlord of any water leaks and it is determined that the water bill is in excess because of this leak, Tenants will be responsible financially for paying the difference in the water bill.</p>
+        
+        <p><span class="section-title">WAIVER:</span> The failure of either Party to enforce any provisions of the Lease shall not be deemed a waiver of limitation of that Party's right to subsequently enforce and compel strict compliance with every provision of this Lease. The acceptance of rent by Landlord does not waive Landlord's right to enforce any provisions of this Lease.</p>
+        
+        <p><span class="section-title">INDEMNIFICATION:</span> To the extent permitted by law, Tenants will indemnify and hold Landlord and Landlord's property, including the Premises, free and harmless from any liability for losses, claims, injury to or death of any person, including Tenants, or for damage to property arising from Tenants using and occupying the Premises or from the acts or omissions of any person or persons, including Tenants, in or about the Premises with Tenants' express or implied consent, except Landlord's act or negligence.</p>
+        
+        <p><span class="section-title">LEGAL FEES:</span> In the event that the Tenant violates the terms of the Lease or defaults in the performance of any covenants in the Lease and the Landlord engages an attorney or institutes a legal action, counterclaim, or summary proceeding against Tenants based upon such violation or default, Tenants shall be liable to Landlord for the costs and expenses incurred in enforcing this Lease, including reasonable attorney fees and costs. In the event the Tenants bring any action against the Landlord pursuant to this Lease and the Landlord prevails, Tenants shall be liable to Landlord for costs and expenses of defending such action, including reasonable attorney fees and costs.</p>
+        
+        <!-- Signature Section -->
+        <div class="signature-block">
+          <p>IN WITNESS THEREOF, the Parties have caused this Lease to be executed on the day and year first above written.</p>
+          
+          <p>As to the Landlord, this ${d.landlord_sign_day || '____'} day of ${d.landlord_sign_month || '____________'} ${d.landlord_sign_year}.</p>
+          
+          <div class="signature-section">
+            <p><strong>LANDLORD:</strong></p>
+            <p class="signature-line">Sign: ____________________________________</p>
+            <p class="signature-line">Print: ____________________________________ Date: _________________</p>
+          </div>
+          
+          <p>As to Tenant, this ${d.tenant_sign_day || '____'} day of ${d.tenant_sign_month || '____________'} ${d.tenant_sign_year}.</p>
+          
+          <div class="signature-section">
+            <p><strong>TENANT:</strong></p>
+            <p class="signature-line">Sign: ____________________________________</p>
+            <p class="signature-line">Print: ____________________________________ Date: _________________</p>
+          </div>
+          
+          <p>IN WITNESS THEREOF, the Parties have caused this Lease to be executed on the day and year first above written.</p>
+          
+          <div class="signature-section">
+            <p><strong>${d.company_name || '________________'} MANAGER:</strong></p>
+            <p class="signature-line">Sign: ____________________________________</p>
+            <p class="signature-line">Print: ____________________________________ Date: _________________</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      const currentStepData = steps[state.currentStep];
+      
+      app.innerHTML = `
+        <div class="app-container">
+          <div class="header">
+            <h1>🏠 Ziad Sowamrah - Lease Generator</h1>
+            <p>Create professional lease agreements in minutes</p>
+          </div>
+          
+          <div class="wizard-card">
+            <div class="progress-bar">
+              ${steps.map((step, index) => `
+                <div class="progress-step ${index === state.currentStep ? 'active' : ''} ${index < state.currentStep ? 'completed' : ''}"
+                     onclick="goToStep(${index})">
+                  <span class="step-number">${index < state.currentStep ? '' : index + 1}</span>
+                  ${step.title}
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="wizard-content">
+              <h2 class="step-title">${currentStepData.fullTitle}</h2>
+              <p class="step-description">${currentStepData.description}</p>
+              
+              ${renderStepContent()}
+              
+              <div class="button-row">
+                <button class="btn btn-secondary" onclick="prevStep()" ${state.currentStep === 0 ? 'disabled' : ''}>
+                  ← Previous
+                </button>
+                ${state.currentStep < steps.length - 1 ? `
+                  <button class="btn btn-primary" onclick="nextStep()">
+                    Next →
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${state.showModal ? `
+          <div class="modal-overlay" onclick="closeModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+              <div class="modal-header">
+                <h3>Generated Lease Agreement</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+              </div>
+              <div class="modal-body">
+                <div id="lease-document" class="lease-preview">
+                  ${renderLeaseDocument()}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn btn-success" onclick="printLease()">🖨️ Print / Save PDF</button>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // Initialize
+    render();
+  </script>
+</body>
+</html>
