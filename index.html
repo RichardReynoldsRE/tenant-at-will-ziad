@@ -503,6 +503,7 @@
         lease_year: new Date().getFullYear().toString(),
         lease_date: '',
         lease_start_date: '',
+        lease_term: 'month-to-month',
         notice_days: '30',
         monthly_rent: '',
         late_fee_day: '15th',
@@ -564,6 +565,63 @@
       const suffix = ['th', 'st', 'nd', 'rd'];
       const v = day % 100;
       return day + (suffix[(v - 20) % 10] || suffix[v] || suffix[0]);
+    }
+
+    function calculateEndDate() {
+      if (!state.formData.lease_start_date) return '—';
+      if (state.formData.lease_term === 'month-to-month') return 'Ongoing';
+      
+      const startDate = new Date(state.formData.lease_start_date);
+      let endDate = new Date(startDate);
+      
+      switch(state.formData.lease_term) {
+        case '3-month':
+          endDate.setMonth(endDate.getMonth() + 3);
+          break;
+        case '6-month':
+          endDate.setMonth(endDate.getMonth() + 6);
+          break;
+        case '1-year':
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          break;
+      }
+      
+      // Subtract one day to get the last day of the lease
+      endDate.setDate(endDate.getDate() - 1);
+      
+      return endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function getLeaseEndDateForDocument() {
+      if (!state.formData.lease_start_date) return '________________';
+      if (state.formData.lease_term === 'month-to-month') return null;
+      
+      const startDate = new Date(state.formData.lease_start_date);
+      let endDate = new Date(startDate);
+      
+      switch(state.formData.lease_term) {
+        case '3-month':
+          endDate.setMonth(endDate.getMonth() + 3);
+          break;
+        case '6-month':
+          endDate.setMonth(endDate.getMonth() + 6);
+          break;
+        case '1-year':
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          break;
+      }
+      
+      endDate.setDate(endDate.getDate() - 1);
+      return endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function getLeaseTypeName() {
+      switch(state.formData.lease_term) {
+        case '3-month': return '3-Month';
+        case '6-month': return '6-Month';
+        case '1-year': return '1-Year';
+        default: return 'At-Will';
+      }
     }
 
     function updateFormData(field, value) {
@@ -751,9 +809,23 @@
                        onchange="updateFormData('lease_start_date', this.value)">
               </div>
               <div class="form-group">
+                <label>Lease Term</label>
+                <select onchange="updateFormData('lease_term', this.value)">
+                  <option value="month-to-month" ${state.formData.lease_term === 'month-to-month' ? 'selected' : ''}>Month-to-Month (At-Will)</option>
+                  <option value="3-month" ${state.formData.lease_term === '3-month' ? 'selected' : ''}>3 Months</option>
+                  <option value="6-month" ${state.formData.lease_term === '6-month' ? 'selected' : ''}>6 Months</option>
+                  <option value="1-year" ${state.formData.lease_term === '1-year' ? 'selected' : ''}>1 Year</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Lease End Date</label>
+                <input type="text" value="${calculateEndDate()}" disabled style="background: #f7fafc; color: #718096;">
+                <small>${state.formData.lease_term === 'month-to-month' ? 'Ongoing until terminated with 30 days notice' : 'Automatically calculated from start date'}</small>
+              </div>
+              <div class="form-group">
                 <label>Notice Days to Terminate</label>
                 <input type="text" value="30" disabled style="background: #f7fafc; color: #718096;">
-                <small>Required by Maine law for at-will tenancies</small>
+                <small>Required by Maine law</small>
               </div>
               <div class="form-group">
                 <label>Monthly Rent</label>
@@ -906,12 +978,20 @@
               <div class="preview-section">
                 <h4>Lease Terms</h4>
                 <div class="preview-item">
+                  <span class="preview-label">Lease Type</span>
+                  <span class="preview-value">${getLeaseTypeName()}</span>
+                </div>
+                <div class="preview-item">
                   <span class="preview-label">Lease Date</span>
                   <span class="preview-value">${state.formData.lease_date ? formatDate(state.formData.lease_date) : '—'}</span>
                 </div>
                 <div class="preview-item">
                   <span class="preview-label">Start Date</span>
                   <span class="preview-value">${state.formData.lease_start_date ? formatDate(state.formData.lease_start_date) : '—'}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">End Date</span>
+                  <span class="preview-value">${calculateEndDate()}</span>
                 </div>
                 <div class="preview-item">
                   <span class="preview-label">Monthly Rent</span>
@@ -969,7 +1049,7 @@
         <!DOCTYPE html>
         <html>
         <head>
-          <title>At-Will Lease Agreement</title>
+          <title>${getLeaseTypeName()} Lease Agreement</title>
           <style>
             @page {
               margin: 0.75in 1in 1in 1in;
@@ -1118,13 +1198,16 @@
       const startDate = d.lease_start_date ? formatDate(d.lease_start_date) : '________________';
       
       return `
-        <h1>${d.lease_year} At-Will Lease Agreement</h1>
+        <h1>${d.lease_year} ${getLeaseTypeName()} Lease Agreement</h1>
         
         <p>This Lease Agreement ("Lease") is entered by and between ${d.landlord_company || '________________'} ("Landlord") and <span class="underline">${d.tenant_names || '________________'}</span> ("Tenants") on <span class="underline">${leaseDate}</span>. Landlord and Tenants may collectively be referred to as the "Parties." This Lease creates joint and several liabilities in the case of multiple Tenants. The Parties agree as follows:</p>
         
         <p><span class="section-title">PREMISES:</span> Landlord hereby leases the premises located at <span class="underline">${d.property_address ? (d.unit_number ? d.property_address + ', ' + d.unit_number : d.property_address) : '________________'}</span>, State of Maine (the "Premises") to Tenants.</p>
         
-        <p><span class="section-title">LEASE TERM:</span> The Lease will start on ${startDate} and will continue on a month-to-month basis until such time that it is terminated. The lease may be terminated by the Landlord or Tenants with a ${d.notice_days} day written notice by either Party. Notice given by the Tenants must be confirmed and received by the Landlord.</p>
+        <p><span class="section-title">LEASE TERM:</span> ${d.lease_term === 'month-to-month' 
+          ? `The Lease will start on ${startDate} and will continue on a month-to-month basis until such time that it is terminated. The lease may be terminated by the Landlord or Tenants with a ${d.notice_days} day written notice by either Party. Notice given by the Tenants must be confirmed and received by the Landlord.`
+          : `The Lease will start on ${startDate} and will end on ${getLeaseEndDateForDocument()}. Upon expiration of this initial term, this Lease shall automatically convert to a month-to-month tenancy under the same terms and conditions unless either Party provides written notice of termination at least ${d.notice_days} days prior to the end of the initial term or any subsequent month. The lease may be terminated by the Landlord or Tenants with a ${d.notice_days} day written notice by either Party. Notice given by the Tenants must be confirmed and received by the Landlord.`
+        }</p>
         
         <p><span class="section-title">LEASE PAYMENTS:</span> Tenant agrees to pay to Landlord as rent for the Premises the amount of ${d.monthly_rent || '________________'} each month in advance or on the 1st day of each month at:</p>
         
